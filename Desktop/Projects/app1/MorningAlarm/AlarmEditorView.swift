@@ -3,10 +3,15 @@ import SwiftUI
 struct AlarmEditorView: View {
     @EnvironmentObject var alarmManager: AlarmManager
     @Binding var isPresented: Bool
+    var editingAlarm: Alarm?
 
     @State private var selectedTime = Date()
     @State private var selectedMode: AlarmMode = .quote
     @State private var musicTitle = ""
+
+    private var isEditing: Bool {
+        editingAlarm != nil
+    }
 
     var body: some View {
         ZStack {
@@ -15,7 +20,7 @@ struct AlarmEditorView: View {
 
             VStack(spacing: 20) {
                 HStack {
-                    Text("New Alarm")
+                    Text(isEditing ? "Edit Alarm" : "New Alarm")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(Color(red: 0.95, green: 0.94, blue: 0.92))
                     Spacer()
@@ -27,6 +32,13 @@ struct AlarmEditorView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
+                .onAppear {
+                    if let alarm = editingAlarm {
+                        selectedTime = alarm.time
+                        selectedMode = alarm.mode
+                        musicTitle = alarm.musicTitle ?? ""
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Time")
@@ -76,7 +88,7 @@ struct AlarmEditorView: View {
                 Spacer()
 
                 Button(action: saveAlarm) {
-                    Text("Create Alarm")
+                    Text(isEditing ? "Save Alarm" : "Create Alarm")
                         .font(.system(size: 16, weight: .semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -90,13 +102,20 @@ struct AlarmEditorView: View {
     }
 
     private func saveAlarm() {
-        let alarm = Alarm(
-            time: selectedTime,
-            isEnabled: true,
-            mode: selectedMode,
-            musicTitle: selectedMode == .music ? musicTitle : nil
-        )
-        alarmManager.addAlarm(alarm)
+        if let alarm = editingAlarm {
+            alarm.time = selectedTime
+            alarm.mode = selectedMode
+            alarm.musicTitle = selectedMode == .music ? musicTitle : nil
+            alarmManager.updateAlarm(alarm)
+        } else {
+            let alarm = Alarm(
+                time: selectedTime,
+                isEnabled: true,
+                mode: selectedMode,
+                musicTitle: selectedMode == .music ? musicTitle : nil
+            )
+            alarmManager.addAlarm(alarm)
+        }
         isPresented = false
     }
 }

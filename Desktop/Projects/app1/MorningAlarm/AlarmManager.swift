@@ -62,8 +62,12 @@ class AlarmManager: ObservableObject {
         content.badge = NSNumber(value: UIApplication.shared.applicationIconBadgeNumber + 1)
         content.userInfo = ["alarmID": alarm.id.uuidString, "mode": alarm.mode.rawValue]
 
-        var dateComponents = Calendar.current.dateComponents([.hour, .minute], from: alarm.time)
+        var dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: alarm.time)
         dateComponents.second = 0
+
+        if let fireDate = Calendar.current.date(from: dateComponents), fireDate <= Date() {
+            dateComponents.day = (dateComponents.day ?? 1) + 1
+        }
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let request = UNNotificationRequest(identifier: alarm.id.uuidString, content: content, trigger: trigger)

@@ -5,6 +5,7 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @EnvironmentObject var alarmManager: AlarmManager
     @State private var showingAddAlarm = false
+    @State private var showingEditAlarm = false
     @State private var activeAlarmAlert = false
 
     var body: some View {
@@ -74,12 +75,18 @@ struct ContentView: View {
             alarmManager.setupSwiftData(modelContext: modelContext)
         }
         .sheet(isPresented: $showingAddAlarm) {
-            AlarmEditorView(isPresented: $showingAddAlarm)
+            AlarmEditorView(isPresented: $showingAddAlarm, editingAlarm: nil)
                 .environmentObject(alarmManager)
+        }
+        .sheet(isPresented: $showingEditAlarm) {
+            if let alarm = alarmManager.activeAlarm {
+                AlarmEditorView(isPresented: $showingEditAlarm, editingAlarm: alarm)
+                    .environmentObject(alarmManager)
+            }
         }
         .alert("Alarm Details", isPresented: $activeAlarmAlert) {
             if let alarm = alarmManager.activeAlarm {
-                Button("Edit", action: { showingAddAlarm = true })
+                Button("Edit", action: { showingEditAlarm = true })
                 Button("Delete", role: .destructive) {
                     alarmManager.deleteAlarm(alarm)
                 }

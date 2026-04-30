@@ -6,7 +6,7 @@ struct WakeUpView: View {
     let alarm: Alarm
 
     @State private var isAnimating = false
-    @State private var audioPlayer: AVAudioPlayer?
+    @State private var speechSynthesizer: AVSpeechSynthesizer?
 
     var body: some View {
         ZStack {
@@ -100,8 +100,8 @@ struct WakeUpView: View {
         let utterance = AVSpeechUtterance(string: quote)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = 0.5
-        let synthesizer = AVSpeechSynthesizer()
-        synthesizer.speak(utterance)
+        speechSynthesizer = AVSpeechSynthesizer()
+        speechSynthesizer?.speak(utterance)
     }
 }
 
