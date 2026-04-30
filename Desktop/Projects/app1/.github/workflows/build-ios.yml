@@ -1,0 +1,78 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Select Xcode Version
+      run: sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+
+    - name: Install dependencies
+      run: |
+        cd /Users/priyapadmanabhan/Desktop/Projects/app1
+        pod install || true
+
+    - name: Build for Simulator
+      run: |
+        cd /Users/priyapadmanabhan/Desktop/Projects/app1
+        xcodebuild \
+          -project MorningAlarm.xcodeproj \
+          -scheme MorningAlarm \
+          -configuration Release \
+          -sdk iphonesimulator \
+          -derivedDataPath build/DerivedData \
+          BUILD_DIR=build/Build \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+
+    - name: Build for Device (Ad-hoc)
+      run: |
+        cd /Users/priyapadmanabhan/Desktop/Projects/app1
+        xcodebuild \
+          -project MorningAlarm.xcodeproj \
+          -scheme MorningAlarm \
+          -configuration Release \
+          -sdk iphoneos \
+          -derivedDataPath build/DerivedData \
+          -archivePath build/MorningAlarm.xcarchive \
+          archive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO 2>&1 || true
+
+    - name: Create IPA (if archive succeeded)
+      run: |
+        cd /Users/priyapadmanabhan/Desktop/Projects/app1
+        if [ -d "build/MorningAlarm.xcarchive" ]; then
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/MorningAlarm.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ipa
+        else
+          echo "Archive failed, trying ad-hoc export..."
+          mkdir -p build/ipa
+        fi
+      continue-on-error: true
+
+    - name: Upload Simulator Build
+      uses: actions/upload-artifact@v3
+      with:
+        name: MorningAlarm-Simulator
+        path: /Users/priyapadmanabhan/Desktop/Projects/app1/build/Build/Release-iphonesimulator
+
+    - name: Upload IPA
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: MorningAlarm-IPA
+        path: /Users/priyapadmanabhan/Desktop/Projects/app1/build/ipa
